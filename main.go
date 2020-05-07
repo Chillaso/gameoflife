@@ -12,8 +12,8 @@ import (
 const (
 	width          = 1000
 	height         = 800
-	numCellX       = 25
-	numCellY       = 25
+	numCellX       = 50
+	numCellY       = 50
 	dimensionCellX = float64(width / numCellX)
 	dimensionCellY = float64(height / numCellY)
 	gameTitle      = "Game of life"
@@ -30,22 +30,24 @@ func main() {
 func run() {
 	window := createWindow()
 	imd := imdraw.New(nil)
-	gameState := [25][25]int{}
+	gameState := [numCellX][numCellY]int{}
+
 	gameState[5][3] = 1
 	gameState[5][4] = 1
 	gameState[5][5] = 1
 
-	/* 	gameState[21][21] = 1
-	   	gameState[22][22] = 1
-	   	gameState[22][23] = 1
-	   	gameState[21][23] = 1
-	   	gameState[20][23] = 1 */
+	gameState[21][21] = 1
+	gameState[22][22] = 1
+	gameState[22][23] = 1
+	gameState[21][23] = 1
+	gameState[20][23] = 1
 
 	for !window.Closed() {
 
 		//Restart Game Logic
 		window.Clear(backgroundColor)
-		time.Sleep(time.Second) // * 100)
+		imd.Clear()
+		time.Sleep(time.Millisecond * 100)
 		newGameState := gameState
 
 		for x := 0; x < numCellX; x++ {
@@ -92,7 +94,7 @@ func run() {
 					imd.Push(poly...)
 					imd.Polygon(2)
 				} else {
-					imd.Color = color.White
+					imd.Color = color.RGBA{R: 255, G: 255, B: 255}
 					imd.Push(poly...)
 					imd.Polygon(0)
 				}
