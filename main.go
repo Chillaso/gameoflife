@@ -31,78 +31,85 @@ func run() {
 	window := createWindow()
 	imd := imdraw.New(nil)
 	gameState := [numCellX][numCellY]int{}
+	paused := false
 
-	gameState[5][3] = 1
-	gameState[5][4] = 1
-	gameState[5][5] = 1
-
-	gameState[21][21] = 1
-	gameState[22][22] = 1
-	gameState[22][23] = 1
-	gameState[21][23] = 1
-	gameState[20][23] = 1
+	gameState[10][1] = 1
+	gameState[10][2] = 1
+	gameState[10][3] = 1
 
 	for !window.Closed() {
 
-		//Restart Game Logic
-		window.Clear(backgroundColor)
-		imd.Clear()
-		time.Sleep(time.Millisecond * 100)
-		newGameState := gameState
-
-		for x := 0; x < numCellX; x++ {
-			for y := 0; y < numCellY; y++ {
-
-				//Control logic
-				controlledX := x
-				controlledY := y
-				if x-1 == -1 {
-					controlledX = numCellX - 1
-				} else {
-					controlledX = (x - 1) % numCellX
-				}
-				if y-1 == -1 {
-					controlledY = numCellY - 1
-				} else {
-					controlledY = (y - 1) % numCellY
-				}
-				//Game logic
-				numberOfNeighs := gameState[controlledX][controlledY] +
-					gameState[x][controlledY] +
-					gameState[(x+1)%numCellX][controlledY] +
-					gameState[controlledX][y%numCellY] +
-					gameState[(x+1)%numCellX][y%numCellY] +
-					gameState[controlledX][(y+1)%numCellY] +
-					gameState[x%numCellX][(y+1)%numCellY] +
-					gameState[(x+1)%numCellX][(y+1)%numCellY]
-
-				if gameState[x][y] == 0 && numberOfNeighs == 3 {
-					newGameState[x][y] = 1
-				} else if gameState[x][y] == 1 && (numberOfNeighs < 2 || numberOfNeighs > 3) {
-					newGameState[x][y] = 0
-				}
-
-				//Drawing logic
-				poly := []pixel.Vec{
-					{X: (float64(x) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
-					{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
-					{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
-					{X: (float64(x) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
-				}
-				if newGameState[x][y] == 0 {
-					imd.Color = color.RGBA{R: 128, G: 128, B: 128}
-					imd.Push(poly...)
-					imd.Polygon(2)
-				} else {
-					imd.Color = color.RGBA{R: 255, G: 255, B: 255}
-					imd.Push(poly...)
-					imd.Polygon(0)
-				}
-			}
-			imd.Draw(window)
+		//Pause
+		if window.JustPressed(pixelgl.KeySpace) && !paused {
+			paused = true
+		} else if window.JustPressed(pixelgl.KeySpace) && paused {
+			paused = false
 		}
-		//Updating logic
-		gameState = newGameState
+
+		if !paused {
+
+			paused = false
+			//Restart Game Logic
+			window.Clear(backgroundColor)
+			imd.Clear()
+			time.Sleep(time.Millisecond * 100)
+			newGameState := gameState
+
+			for x := 0; x < numCellX; x++ {
+				for y := 0; y < numCellY; y++ {
+
+					//Control logic
+					controlledX := x
+					controlledY := y
+					if x-1 == -1 {
+						controlledX = numCellX - 1
+					} else {
+						controlledX = (x - 1) % numCellX
+					}
+					if y-1 == -1 {
+						controlledY = numCellY - 1
+					} else {
+						controlledY = (y - 1) % numCellY
+					}
+					//Game logic
+					numberOfNeighs := gameState[controlledX][controlledY] +
+						gameState[x][controlledY] +
+						gameState[(x+1)%numCellX][controlledY] +
+						gameState[controlledX][y%numCellY] +
+						gameState[(x+1)%numCellX][y%numCellY] +
+						gameState[controlledX][(y+1)%numCellY] +
+						gameState[x%numCellX][(y+1)%numCellY] +
+						gameState[(x+1)%numCellX][(y+1)%numCellY]
+
+					if gameState[x][y] == 0 && numberOfNeighs == 3 {
+						newGameState[x][y] = 1
+					} else if gameState[x][y] == 1 && (numberOfNeighs < 2 || numberOfNeighs > 3) {
+						newGameState[x][y] = 0
+					}
+
+					//Drawing logic
+					poly := []pixel.Vec{
+						{X: (float64(x) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
+						{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
+						{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
+						{X: (float64(x) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
+					}
+					if newGameState[x][y] == 0 {
+						imd.Color = color.RGBA{R: 128, G: 128, B: 128}
+						imd.Push(poly...)
+						imd.Polygon(2)
+					} else {
+						imd.Color = color.RGBA{R: 255, G: 255, B: 255}
+						imd.Push(poly...)
+						imd.Polygon(0)
+					}
+				}
+				imd.Draw(window)
+			}
+			//Updating logic
+			gameState = newGameState
+		}
+
 		window.Update()
 	}
 }
