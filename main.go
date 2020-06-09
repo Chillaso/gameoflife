@@ -33,9 +33,16 @@ func run() {
 	gameState := [numCellX][numCellY]int{}
 	paused := false
 
+	//Initial game state, remove if you don't want it
 	gameState[10][1] = 1
 	gameState[10][2] = 1
 	gameState[10][3] = 1
+
+	gameState[21][21] = 1
+	gameState[22][22] = 1
+	gameState[22][23] = 1
+	gameState[21][23] = 1
+	gameState[20][23] = 1
 
 	for !window.Closed() {
 
@@ -54,6 +61,11 @@ func run() {
 			imd.Clear()
 			time.Sleep(time.Millisecond * 100)
 			newGameState := gameState
+
+			cellX, cellY, state := getStateIfClicked(window)
+			if state != -1 {
+				newGameState[cellX][cellY] = state
+			}
 
 			for x := 0; x < numCellX; x++ {
 				for y := 0; y < numCellY; y++ {
@@ -88,26 +100,31 @@ func run() {
 					}
 
 					//Drawing logic
-					poly := []pixel.Vec{
-						{X: (float64(x) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
-						{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
-						{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
-						{X: (float64(x) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
-					}
+					poly := getPolygonVect(x, y)
 					if newGameState[x][y] == 0 {
-						imd.Color = color.RGBA{R: 128, G: 128, B: 128}
-						imd.Push(poly...)
-						imd.Polygon(2)
+						//uncomment if you want to see a grid
+						//drawBlankCell(imd, poly)
 					} else {
-						imd.Color = color.RGBA{R: 255, G: 255, B: 255}
-						imd.Push(poly...)
-						imd.Polygon(0)
+						drawFilledCell(imd, poly)
 					}
 				}
 				imd.Draw(window)
 			}
 			//Updating logic
 			gameState = newGameState
+		} else {
+			//TODO: Extract to method
+			cellX, cellY, state := getStateIfClicked(window)
+			if state != -1 {
+				poly := getPolygonVect(cellX, cellY)
+				if state == 0 {
+					drawBlankCell(imd, poly)
+				} else {
+					drawFilledCell(imd, poly)
+				}
+				imd.Draw(window)
+				gameState[cellX][cellY] = state
+			}
 		}
 
 		window.Update()
@@ -126,4 +143,43 @@ func createWindow() *pixelgl.Window {
 	}
 	window.Clear(backgroundColor)
 	return window
+}
+
+func getPolygonVect(x, y int) *[]pixel.Vec {
+	return &[]pixel.Vec{
+		{X: (float64(x) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
+		{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y) * dimensionCellY)},
+		{X: ((float64(x) + 1) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
+		{X: (float64(x) * dimensionCellX), Y: (float64(y+1) * dimensionCellY)},
+	}
+}
+
+func drawFilledCell(imd *imdraw.IMDraw, poly *[]pixel.Vec) {
+	imd.Color = color.White
+	imd.Push(*poly...)
+	imd.Polygon(0)
+}
+
+func drawBlankCell(imd *imdraw.IMDraw, poly *[]pixel.Vec) {
+	imd.Color = color.Black
+	imd.Push(*poly...)
+	imd.Polygon(0)
+}
+
+func getStateIfClicked(window *pixelgl.Window) (int, int, int) {
+	if window.Pressed(pixelgl.MouseButtonLeft) {
+		celX, celY := getCellXYByMousePosition(window)
+		return celX, celY, 1
+	} else if window.Pressed(pixelgl.MouseButtonRight) {
+		celX, celY := getCellXYByMousePosition(window)
+		return celX, celY, 0
+	}
+	return -1, -1, -1
+}
+
+func getCellXYByMousePosition(window *pixelgl.Window) (int, int) {
+	mouseX, mouseY := window.MousePosition().XY()
+	celX := int(mouseX / dimensionCellX)
+	celY := int(mouseY / dimensionCellY)
+	return celX, celY
 }
